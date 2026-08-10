@@ -1,0 +1,20 @@
+{
+  "name": "bel-nebula-backend",
+  "version": "2.0.0",
+  "description": "Bel-Nebula voucher-vending backend — Paystack payments + Mikhmon/MikroTik voucher database + SMS/email delivery",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "import-vouchers": "node scripts/importVouchers.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.14",
+    "pg": "^8.12.0"
+  }
+}
