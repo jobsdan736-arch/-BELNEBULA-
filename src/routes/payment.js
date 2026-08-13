@@ -66,9 +66,12 @@ router.post('/payment/initialize', async (req, res) => {
     const reference = `BN-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
     const amountKobo = tier.priceNaira * 100;
 
-    // Paystack requires an email even for SMS-delivery buyers.
+  // Paystack requires an email even for SMS-delivery buyers. Use a
+    // domain we actually control, since Paystack rejects made-up
+    // top-level domains like ".customer" as invalid.
+    const cleanPhone = String(contact).replace(/\D/g, '');
     const billingEmail =
-      contactMethod === 'email' ? contact : `${contact.replace(/\D/g, '')}@bel-nebula.customer`;
+      contactMethod === 'email' ? contact : `${cleanPhone}@belnebula-frontend.vercel.app`;
 
     const tx = await paystackService.initializeTransaction({
       email: billingEmail,
