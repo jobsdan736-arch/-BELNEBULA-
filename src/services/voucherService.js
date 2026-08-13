@@ -58,7 +58,7 @@ async function claimVoucher({ tier, reference, contact }) {
          LIMIT 1
          FOR UPDATE SKIP LOCKED
        )
-       RETURNING code, id`,
+       RETURNING code, password, id`,
       [contact, reference, tier]
     );
 
