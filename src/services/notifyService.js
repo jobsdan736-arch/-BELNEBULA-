@@ -1,12 +1,6 @@
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 
-/**
- * MOCK MODE: if the relevant provider keys aren't set, delivery is logged
- * to the console instead of actually sent. That lets you test the full
- * payment -> voucher flow before Termii/SMTP credentials exist, the same
- * way MikroTik mock mode worked in the earlier build.
- */
 const smsIsMock = !process.env.TERMII_API_KEY;
 const emailIsMock = !process.env.SMTP_HOST;
 
@@ -23,6 +17,15 @@ function getTransporter() {
   return transporter;
 }
 
+// Termii expects Nigerian numbers as 234XXXXXXXXXX, not the local
+// 0XXXXXXXXXX format students actually type in.
+function toInternational(phone) {
+  const digits = String(phone).replace(/\D/g, '');
+  if (digits.startsWith('234')) return digits;
+  if (digits.startsWith('0')) return '234' + digits.slice(1);
+  return digits;
+}
+
 async function sendSms(to, message) {
   if (smsIsMock) {
     console.log(`[sms:mock] would text ${to}: "${message}"`);
@@ -31,7 +34,7 @@ async function sendSms(to, message) {
 
   await axios.post('https://api.ng.termii.com/api/sms/send', {
     api_key: process.env.TERMII_API_KEY,
-    to,
+    to: toInternational(to),
     from: process.env.TERMII_SENDER_ID || 'BelNebula',
     sms: message,
     type: 'plain',
@@ -55,14 +58,10 @@ async function sendEmail(to, subject, message) {
   return { mocked: false };
 }
 
-/**
- * Sends a voucher to the buyer via whichever contact method they chose
- * at checkout.
- */
-async function deliverVoucher({ contact, contactMethod, voucherCode, tierLabel }) {
+async function deliverVoucher({ contact, contactMethod, voucherCode, voucherPassword, tierLabel }) {
   const message =
-    `Bel-Nebula: Your ${tierLabel} voucher is ${voucherCode}. ` +
-    `Connect to the Bel-Nebula WiFi and enter this as both username and password to log in.`;
+    `Bel-Nebula: Your ${tierLabel} voucher — Username: ${voucherCode}, Password: ${voucherPassword}. ` +
+    `Connect to the Bel-Nebula WiFi and enter these on the login page.`;
 
   if (contactMethod === 'sms') {
     return sendSms(contact, message);
