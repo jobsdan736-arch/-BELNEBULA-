@@ -168,12 +168,18 @@ async function fulfil(reference) {
     .deliverVoucher({
       contact: txRow.contact,
       contactMethod: txRow.contact_method,
-      voucherCode: claimed.code,
+   voucherCode: claimed.code,
+      voucherPassword: claimed.password,
       tierLabel: tierInfo?.label || txRow.tier,
     })
     .catch((err) => console.error(`[notify] delivery failed for ${reference}:`, err.message));
 
-  return { status: 'fulfilled', voucherCode: claimed.code, tier: txRow.tier };
+return {
+    status: 'fulfilled',
+    voucherCode: claimed.code,
+    voucherPassword: claimed.password,
+    tier: txRow.tier,
+  };
 }
 
 // POST /api/payment/verify — called by the frontend right after the
@@ -195,7 +201,12 @@ router.post('/payment/verify', async (req, res) => {
       });
     }
 
-    res.json({ status: 'fulfilled', voucherCode: result.voucherCode, tier: result.tier });
+  res.json({
+      status: 'fulfilled',
+      voucherCode: result.voucherCode,
+      voucherPassword: result.voucherPassword,
+      tier: result.tier,
+    });
   } catch (err) {
     console.error('[payment/verify]', err.message);
     res.status(400).json({ error: err.message || 'Could not verify payment.' });
