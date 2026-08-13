@@ -109,8 +109,13 @@ async function fulfil(reference) {
   const txRow = rows[0];
   if (!txRow) throw new Error(`No transaction found for reference ${reference}`);
 
-  if (txRow.status === 'fulfilled') {
-    return { status: 'fulfilled', voucherCode: txRow.voucher_code, tier: txRow.tier };
+ if (txRow.status === 'fulfilled') {
+    return {
+      status: 'fulfilled',
+      voucherCode: txRow.voucher_code,
+      voucherPassword: txRow.voucher_password,
+      tier: txRow.tier,
+    };
   }
 
   const verified = await paystackService.verifyTransaction(reference);
@@ -148,11 +153,11 @@ async function fulfil(reference) {
     return { status: 'paid_awaiting_voucher', tier: txRow.tier };
   }
 
-  await pool.query(
+ await pool.query(
     `UPDATE transactions
-       SET status = 'fulfilled', voucher_code = $1, fulfilled_at = now()
-     WHERE reference = $2`,
-    [claimed.code, reference]
+       SET status = 'fulfilled', voucher_code = $1, voucher_password = $2, fulfilled_at = now()
+     WHERE reference = $3`,
+    [claimed.code, claimed.password, reference]
   );
 
   // TIERS is keyed by the same string as the tier enum (e.g. "hourly"),
